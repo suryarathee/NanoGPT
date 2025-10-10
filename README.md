@@ -2,6 +2,13 @@
 
 A minimal and efficient implementation of a Transformer-based language model, inspired by GPT. This project is built from scratch using PyTorch, with support for FlashAttention, Cosine LR Decay, Checkpointing, and Distributed Data Parallel (DDP) training.
 
+The resultant model is not the best but a great leap in terms of machine learning.
+
+THIS IS A TEST APP
+https://chatbot-transformer.streamlit.app/
+
+
+
 ## 🚀 Model Overview
 
 This GPT model follows the architecture of the original Transformer, as introduced in [Attention is All You Need](https://doi.org/10.48550/arXiv.1706.03762).
