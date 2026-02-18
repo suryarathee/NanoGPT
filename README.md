@@ -1,74 +1,79 @@
 # NanoGPT
 
-A minimal and efficient implementation of a Transformer-based language model, inspired by GPT. This project is built from scratch using PyTorch, with support for FlashAttention, Cosine LR Decay, Checkpointing, and Distributed Data Parallel (DDP) training.
+A minimal and efficient implementation of a Transformer-based language model, inspired by the GPT architecture. This project is built from scratch using **PyTorch**, designed to be a clean, educational, yet capable codebase.
 
-The resultant model is not the best but a great leap in terms of machine learning.
+It incorporates modern training optimizations including **FlashAttention**, **Cosine Learning Rate Decay**, **Checkpointing**, and **Distributed Data Parallel (DDP)** training.
 
-THIS IS A TEST APP
-https://chatbot-transformer.streamlit.app/
+> **Note:** While this is a test implementation and not a State-of-the-Art (SOTA) foundation model, it represents a significant structural leap in understanding efficient LLM training.
 
+### Live Demo
+Try the test application here: **[Chatbot Transformer App](https://chatbot-transformer.streamlit.app/)**
 
+---
 
-## 🚀 Model Overview
+## Model Overview
 
-This GPT model follows the architecture of the original Transformer, as introduced in [Attention is All You Need](https://doi.org/10.48550/arXiv.1706.03762).
-The basic System design is inspired by [ChatGPT2](https://github.com/openai/gpt-2) which was implemented in Tensorflow.
-Introduction of new concept like Flash Attention  have decreased Training time as compared to initial GPT2 Model.
-Training date used is [FineWeb-Edu](https://huggingface.co/datasets/HuggingFaceFW/fineweb-edu/viewer) which is much better that OpenWebText used by Original ChatGPT2.
+This model adheres to the original Transformer architecture introduced in *[Attention is All You Need](https://doi.org/10.48550/arXiv.1706.03762)*. The system design draws inspiration from OpenAI's [GPT-2](https://github.com/openai/gpt-2), originally implemented in TensorFlow, but modernized here for PyTorch.
 
+### Key Improvements
+| Feature | Description |
+| :--- | :--- |
+| **FlashAttention** | Drastically reduces training time and memory usage compared to the standard attention mechanism used in early GPT-2 implementations. |
+| **FineWeb-Edu** | Trained on the [FineWeb-Edu dataset](https://huggingface.co/datasets/HuggingFaceFW/fineweb-edu/viewer), a high-quality educational dataset superior to the OpenWebText corpus used by the original GPT-2. |
 
-![image](https://github.com/user-attachments/assets/726cddb4-f620-4385-a147-add57e7a4ba1)
+![Model Architecture Diagram](https://github.com/user-attachments/assets/726cddb4-f620-4385-a147-add57e7a4ba1)
 
+---
 
+## 🔧 Architecture Details
 
+### The Transformer Block
+The core component of the model is the Transformer Block. Each block processes the input stream through the following layers:
 
-### 🔧 Transformer Block
+**Flow:**
+`x → LayerNorm → MultiHeadSelfAttention → Add & Norm → FeedForward → Dropout → Add & Norm`
 
-Each block in the model is structured as:
-
-```
-x → LayerNorm → MultiHeadSelfAttention → Add & Norm → FeedForward → Dropout → Add & Norm
-```
-
-Mathematically:
-
+**Mathematical Formulation:**
 $$
-\text{TransformerBlock}(x) = x + \text{Dropout}\left( \text{FFN}\left( \text{LayerNorm}\left( x + \text{MultiHeadSelfAttention}(\text{LayerNorm}(x)) \right) \right) \right)
+\text{Block}(x) = x + \text{Dropout}\left( \text{FFN}\left( \text{LayerNorm}\left( x + \text{MHSA}(\text{LayerNorm}(x)) \right) \right) \right)
 $$
 
 Where:
-- **LayerNorm** normalizes the input.
-- **MultiHeadSelfAttention** captures contextual relationships.
-- **FFN** is a position-wise feed-forward network.
-- **Dropout** improves generalization.
+* **LayerNorm:** Normalizes input across features to stabilize training.
+* **MHSA (Multi-Head Self-Attention):** Captures long-range dependencies and contextual relationships.
+* **FFN (Feed-Forward Network):** A position-wise network processing each token independently.
+* **Dropout:** Randomly zeroes elements to prevent overfitting.
 
-### Architecture Flow
+### Processing Pipeline
+The model processes a sequence of input tokens as follows:
 
-The model processes input tokens as follows:
+$$
+\begin{aligned}
+x_0 &= \text{TokenEmbedding}(\text{input}) + \text{PositionalEmbedding}(\text{indices}) \\
+x_{i+1} &= \text{TransformerBlock}(x_i), \quad \text{for } i = 0, \dots, N-1 \\
+\hat{y} &= \text{Softmax}(\text{Linear}(x_N))
+\end{aligned}
+$$
 
-```
-x_0 = TokenEmbedding(input)
-x_{i+1} = TransformerBlock(x_i),  for i = 0, ..., N-1
-\hat{y} = Softmax(Linear(x_N))
-```
+### Training Objective
+The model is optimized using **Causal Language Modeling (CLM)** loss, maximizing the probability of the next token given previous tokens:
 
-###  Objective
-
-The model is trained using the **causal language modeling** loss:
-
-```
+$$
 \mathcal{L} = -\sum_{t=1}^{T} \log P(x_t \mid x_{<t})
-```
+$$
 
-##  Training Features
+---
 
-- **Cosine Learning Rate Decay**:
+## Training Features
 
-  ```
-  \eta_t = \eta_{\text{min}} + \frac{1}{2}(\eta_{\text{max}} - \eta_{\text{min}})\left(1 + \cos\left(\frac{T_{\text{cur}}}{T_{\text{max}}} \pi\right)\right)
-  ```
+The training loop implements several advanced features to ensure stability and speed:
 
-- **FlashAttention** for faster and memory-efficient training.
-- **Checkpointing** to save and resume training.
-- **Distributed Data Parallel (DDP)** support for multi-GPU scalability.
+* **Cosine Learning Rate Decay:**
+    Smoothly reduces the learning rate to improve convergence.
+    $$
+    \eta_t = \eta_{\text{min}} + \frac{1}{2}(\eta_{\text{max}} - \eta_{\text{min}})\left(1 + \cos\left(\frac{T_{\text{cur}}}{T_{\text{max}}} \pi\right)\right)
+    $$
 
+* **FlashAttention:** Utilized for fast and memory-efficient exact attention.
+* **Checkpointing:** Automatic saving of model states to resume training seamlessly.
+* **Distributed Data Parallel (DDP):** Supports scaling training across multiple GPUs.
